@@ -52,18 +52,23 @@ def cpcv_evaluate(df, signal_fn, param_grid, backtest_fn, n_groups=8, k_test=2,
     Returns dict with per-path out-of-sample stats and the distribution of
     OOS daily Sharpe across paths.
     """
+    from .engine import backtest_subset
+
     paths = cpcv_paths(len(df), n_groups, k_test, embargo_frac)
+    # Signals are computed ONCE on the full contiguous series. Slicing the frame
+    # before computing rolling features spans seams and fabricates price jumps.
+    sig_cache = [signal_fn(df, **p) for p in param_grid]
+
     oos_rows = []
     for pi, (tr, te) in enumerate(paths):
-        df_tr, df_te = df.iloc[tr], df.iloc[te]
-        best_params, best_score = None, -np.inf
-        for params in param_grid:
-            sig = signal_fn(df_tr, **params)
-            score = backtest_fn(df_tr, sig, friction_ticks=friction_ticks)["stats"].get(select_metric, -np.inf)
+        best_j, best_score = None, -np.inf
+        for j, params in enumerate(param_grid):
+            score = backtest_subset(df, sig_cache[j], tr,
+                                    friction_ticks=friction_ticks)["stats"].get(select_metric, -np.inf)
             if score > best_score:
-                best_score, best_params = score, params
-        sig_te = signal_fn(df_te, **best_params)
-        res = backtest_fn(df_te, sig_te, friction_ticks=friction_ticks)
+                best_score, best_j = score, j
+        best_params = param_grid[best_j]
+        res = backtest_subset(df, sig_cache[best_j], te, friction_ticks=friction_ticks)
         row = {"path": pi, "params": str(best_params)}
         row.update(res["stats"])
         row["oos_daily_sharpe"] = _daily_sharpe(res["pnl"])

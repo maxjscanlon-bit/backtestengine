@@ -43,6 +43,38 @@ def backtest(df, signal, friction_ticks=2.0, point_value=POINT_VALUE):
     return {"stats": stats, "pnl": pnl, "equity": equity, "trades": trades}
 
 
+def backtest_subset(df, signal, idx, friction_ticks=2.0, point_value=POINT_VALUE):
+    """Score a signal on a subset of bars WITHOUT slicing the price series.
+
+    The signal and the bar returns are computed on the full contiguous frame,
+    then P&L is accrued only on bars in `idx`. The first bar of each contiguous
+    block in `idx` is dropped because its return spans a gap to whatever came
+    before the block, which is not a real market move.
+
+    This is the correct way to evaluate CPCV folds. Slicing the frame first and
+    recomputing rolling features across the seam is what produced fake jumps.
+    """
+    sig = signal.reindex(df.index).fillna(0.0)
+    pos = sig.shift(1).fillna(0.0)
+    bar_ret_pts = df["close"].diff().fillna(0.0)
+    friction_pts = sig.diff().abs().fillna(sig.abs()) * friction_ticks * TICK
+    net_pts = pos * bar_ret_pts - friction_pts.shift(1).fillna(0.0)
+    pnl_full = net_pts * point_value
+
+    idx = np.asarray(idx)
+    keep = np.ones(len(idx), dtype=bool)
+    keep[0] = False
+    keep[1:] = np.diff(idx) == 1          # drop first bar of every block
+    sel = idx[keep]
+
+    pnl = pnl_full.iloc[sel]
+    equity = pnl.cumsum()
+    sub_sig = sig.iloc[sel]
+    trades = _extract_trades(sub_sig, df["close"].iloc[sel], friction_ticks, point_value)
+    return {"stats": summarize(pnl, equity, trades), "pnl": pnl,
+            "equity": equity, "trades": trades}
+
+
 def _extract_trades(sig, close, friction_ticks, point_value):
     """Collapse the position series into discrete trades."""
     rows = []

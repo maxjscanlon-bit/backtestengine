@@ -12,7 +12,10 @@ def zscore_reversal(df, lookback=48, z_entry=-1.5, hold_bars=6, session_rth_only
     """Intraday analog of the YM strong-down reversal. Long when bar-close z-score
     of returns over `lookback` bars drops below z_entry, hold for hold_bars, exit.
     """
-    ret = df["close"].pct_change()
+    # POINT returns, not pct_change. Prices are Panama back-adjusted, so early
+    # history sits at an inflated level and percentage moves are systematically
+    # compressed there. Point moves are unaffected by the additive offset.
+    ret = df["close"].diff()
     mu = ret.rolling(lookback).mean()
     sd = ret.rolling(lookback).std()
     z = (ret - mu) / sd

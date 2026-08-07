@@ -54,12 +54,42 @@ check("flat signal zero pnl", r['stats']['total_pnl'] == 0 and r['stats']['n_tra
 # 1b. Always-long with zero friction equals buy and hold point change
 al = pd.Series(1.0, index=df.index)
 r = backtest(df, al, friction_ticks=0)
-bh = (df['close'].iloc[-1] - df['close'].iloc[0]) * 20.0
-# engine starts holding from bar 1 close, so subtract first bar move
-bh_engine = (df['close'].iloc[-1] - df['close'].iloc[0]) * 20.0
-diff = abs(r['stats']['total_pnl'] - bh_engine)
-check("always-long matches buy and hold", diff < 20 * df['close'].diff().abs().iloc[1] + 1e-6,
-      f"engine {r['stats']['total_pnl']:.2f} vs bh {bh_engine:.2f}")
+# independent reference: signal at bar 0 means hold from bar 0 close onward
+ref = (df['close'].iloc[-1] - df['close'].iloc[0]) * 20.0
+check("always-long matches independent buy-and-hold reference",
+      abs(r['stats']['total_pnl'] - ref) < 0.01,
+      f"engine {r['stats']['total_pnl']:.2f} vs reference {ref:.2f}")
+
+# 1b2. REGRESSION: evaluating a fold must not accrue pnl on seam bars.
+# Build a frame with a huge artificial gap, then score a discontiguous index set.
+from nq_engine.engine import backtest_subset
+gap_df = df.copy()
+gap_df.iloc[5000:, :4] += 5000.0          # 5000-point discontinuity at bar 5000
+always = pd.Series(1.0, index=gap_df.index)
+idx_span = np.concatenate([np.arange(4000, 4010), np.arange(5000, 5010)])
+r_span = backtest_subset(gap_df, always, idx_span, friction_ticks=0)
+check("subset scoring excludes the seam jump",
+      abs(r_span['stats']['total_pnl']) < 5000 * 20 * 0.5,
+      f"pnl {r_span['stats']['total_pnl']:.0f}, artificial gap worth {5000*20:,}")
+
+# 1b3. REGRESSION: signal must be computed on full series, not per-fold slices.
+# Same signal scored two ways on a contiguous fold should agree exactly.
+contig = np.arange(1000, 3000)
+a = backtest_subset(df, zscore_reversal(df, session_rth_only=False), contig, friction_ticks=2)
+b = backtest(df.iloc[contig[0] - 1:contig[-1] + 1],
+             zscore_reversal(df, session_rth_only=False).iloc[contig[0] - 1:contig[-1] + 1],
+             friction_ticks=2)
+check("subset and full-slice agree on contiguous fold",
+      abs(a['stats']['total_pnl'] - b['stats']['total_pnl']) < 1e-6 + 0.02 * abs(b['stats']['total_pnl']),
+      f"subset {a['stats']['total_pnl']:.0f} vs slice {b['stats']['total_pnl']:.0f}")
+
+# 1b4. REGRESSION: signals must use point returns, immune to additive back-adjust offset
+shifted = df.copy()
+shifted[['open', 'high', 'low', 'close']] += 3000.0
+check("signal invariant to back-adjustment offset",
+      zscore_reversal(df, session_rth_only=False).equals(
+          zscore_reversal(shifted, session_rth_only=False)),
+      "pct_change would break this, point diffs do not")
 
 # 1c. No lookahead: signal = sign of CURRENT bar return must not capture that bar
 cur_sign = np.sign(df['close'].diff()).fillna(0.0)
