@@ -49,6 +49,7 @@ def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
     high = df["high"].values
     low = df["low"].values
     close = df["close"].values
+    open_ = df["open"].values
     n = len(df)
     idx = df.index
 

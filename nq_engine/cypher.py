@@ -26,6 +26,7 @@ def run_cypher(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272, c_hi=1.414,
     high = df["high"].values
     low = df["low"].values
     close = df["close"].values
+    open_ = df["open"].values
     n = len(df)
     idx = df.index
 
@@ -105,16 +106,21 @@ def run_cypher(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272, c_hi=1.414,
 
         if active is not None:
             exit_px, result = None, 0
+            op = open_[i]
             if active["dir"] == 1:
                 if low[i] <= active["sl"]:
-                    exit_px, result = active["sl"], -1
+                    exit_px = min(op, active["sl"])   # gap through stop fills worse
+                    result = -1
                 elif not entered_this_bar and high[i] >= active["tp"]:
-                    exit_px, result = active["tp"], 1
+                    exit_px = max(op, active["tp"])   # gap through target fills better
+                    result = 1
             else:
                 if high[i] >= active["sl"]:
-                    exit_px, result = active["sl"], -1
+                    exit_px = max(op, active["sl"])
+                    result = -1
                 elif not entered_this_bar and low[i] <= active["tp"]:
-                    exit_px, result = active["tp"], 1
+                    exit_px = min(op, active["tp"])
+                    result = 1
             if exit_px is not None:
                 pts = (exit_px - active["entry"]) * active["dir"] - 2 * fric_pts
                 dollars = pts * POINT_VALUE
