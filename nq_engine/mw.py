@@ -32,7 +32,8 @@ TICK = 0.25
 
 
 def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
-           friction_ticks=2.0, exit_mode="bracket", hold_bars=12):
+           friction_ticks=2.0, exit_mode="bracket", hold_bars=12,
+           trade_direction="default"):
     """Event-driven backtest of the Default-mode M/W strategy on OHLC bars.
 
     exit_mode:
@@ -106,35 +107,43 @@ def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
             d1, d2, d3 = zz_dirs[-3], zz_dirs[-2], zz_dirs[-1]
             is_m = d1 == -1 and d2 == 1 and d3 == -1 and v1 < v2 and v2 > v3 and v1 < v3
             is_w = d1 == 1 and d2 == -1 and d3 == 1 and v1 > v2 and v2 < v3 and v1 > v3
+            inv = trade_direction == "inverse"
             if is_m and want_m:
                 dist = abs(high[i] - v3)
+                a = v3 + dist * tp_pct / 100.0   # above entry
+                b = v3 + dist * sl_pct / 100.0   # below entry (sl_pct < 0)
                 if exit_mode == "farstop":
-                    tp_lv, sl_lv = v3 + dist * tp_pct / 100.0, v1
+                    tp_lv, sl_lv = (b, v1) if inv else (a, v1)
                 else:
-                    tp_lv = v3 + dist * tp_pct / 100.0
-                    sl_lv = v3 + dist * sl_pct / 100.0
-                pending = {"entry": v3, "dir": 1, "ptype": "M",
+                    tp_lv, sl_lv = (b, a) if inv else (a, b)
+                pending = {"entry": v3, "dir": -1 if inv else 1, "ptype": "M",
                            "v1": v1, "v2": v2, "v3": v3,
                            "tp": tp_lv, "sl": sl_lv}
             elif is_w and want_w:
                 dist = abs(v3 - low[i])
+                a = v3 - dist * tp_pct / 100.0   # below entry
+                b = v3 - dist * sl_pct / 100.0   # above entry
                 if exit_mode == "farstop":
-                    tp_lv, sl_lv = v3 - dist * tp_pct / 100.0, v1
+                    tp_lv, sl_lv = (b, v1) if inv else (a, v1)
                 else:
-                    tp_lv = v3 - dist * tp_pct / 100.0
-                    sl_lv = v3 - dist * sl_pct / 100.0
-                pending = {"entry": v3, "dir": -1, "ptype": "W",
+                    tp_lv, sl_lv = (b, a) if inv else (a, b)
+                pending = {"entry": v3, "dir": 1 if inv else -1, "ptype": "W",
                            "v1": v1, "v2": v2, "v3": v3,
                            "tp": tp_lv, "sl": sl_lv}
 
         # activation: conservative trade-through, not touch
+        # default mode: limit orders (long fills below, short fills above)
+        # inverse mode: stop orders (long fills above, short fills below)
         entered_this_bar = False
         if active is None and pending is not None:
-            if pending["dir"] == 1 and low[i] < pending["entry"]:
-                active = dict(pending, entry_i=i)
-                pending = None
-                entered_this_bar = True
-            elif pending["dir"] == -1 and high[i] > pending["entry"]:
+            d = pending["dir"]
+            if trade_direction == "default":
+                hit = (d == 1 and low[i] < pending["entry"]) or \
+                      (d == -1 and high[i] > pending["entry"])
+            else:
+                hit = (d == 1 and high[i] > pending["entry"]) or \
+                      (d == -1 and low[i] < pending["entry"])
+            if hit:
                 active = dict(pending, entry_i=i)
                 pending = None
                 entered_this_bar = True
