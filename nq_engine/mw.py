@@ -32,8 +32,14 @@ TICK = 0.25
 
 
 def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
-           friction_ticks=2.0):
+           friction_ticks=2.0, exit_mode="bracket", hold_bars=12):
     """Event-driven backtest of the Default-mode M/W strategy on OHLC bars.
+
+    exit_mode:
+      'bracket'  original TP/SL percent bracket (conservative resolution)
+      'time'     no stop, no target: exit at the close hold_bars after entry
+      'farstop'  stop beyond the pattern's FAR pivot (v1), TP percent bracket;
+                 stop rationale: v1 is structure, a fraction of the swing is noise
 
     Returns {'stats', 'pnl', 'trades'} shaped like engine.backtest output.
     pnl is a per-bar series with each closed trade's P&L attributed to its
@@ -41,6 +47,7 @@ def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
     """
     high = df["high"].values
     low = df["low"].values
+    close = df["close"].values
     n = len(df)
     idx = df.index
 
@@ -101,16 +108,24 @@ def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
             is_w = d1 == 1 and d2 == -1 and d3 == 1 and v1 > v2 and v2 < v3 and v1 > v3
             if is_m and want_m:
                 dist = abs(high[i] - v3)
+                if exit_mode == "farstop":
+                    tp_lv, sl_lv = v3 + dist * tp_pct / 100.0, v1
+                else:
+                    tp_lv = v3 + dist * tp_pct / 100.0
+                    sl_lv = v3 + dist * sl_pct / 100.0
                 pending = {"entry": v3, "dir": 1, "ptype": "M",
                            "v1": v1, "v2": v2, "v3": v3,
-                           "tp": v3 + dist * tp_pct / 100.0,
-                           "sl": v3 + dist * sl_pct / 100.0}
+                           "tp": tp_lv, "sl": sl_lv}
             elif is_w and want_w:
                 dist = abs(v3 - low[i])
+                if exit_mode == "farstop":
+                    tp_lv, sl_lv = v3 - dist * tp_pct / 100.0, v1
+                else:
+                    tp_lv = v3 - dist * tp_pct / 100.0
+                    sl_lv = v3 - dist * sl_pct / 100.0
                 pending = {"entry": v3, "dir": -1, "ptype": "W",
                            "v1": v1, "v2": v2, "v3": v3,
-                           "tp": v3 - dist * tp_pct / 100.0,
-                           "sl": v3 - dist * sl_pct / 100.0}
+                           "tp": tp_lv, "sl": sl_lv}
 
         # activation: conservative trade-through, not touch
         entered_this_bar = False
@@ -127,7 +142,11 @@ def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
         # exit management: SL checked FIRST, TP not allowed on the entry bar
         if active is not None:
             exit_px, result = None, 0
-            if active["dir"] == 1:
+            if exit_mode == "time":
+                if i - active["entry_i"] >= hold_bars:
+                    exit_px = close[i]
+                    result = 1 if (exit_px - active["entry"]) * active["dir"] > 0 else -1
+            elif active["dir"] == 1:
                 if low[i] <= active["sl"]:
                     exit_px, result = active["sl"], -1
                 elif not entered_this_bar and high[i] >= active["tp"]:
@@ -145,6 +164,7 @@ def run_mw(df, period=5, tp_pct=61.8, sl_pct=-61.8, pattern="both",
                     "entry_time": idx[active["entry_i"]], "exit_time": idx[i],
                     "dir": active["dir"], "ptype": active["ptype"],
                     "v1": active["v1"], "v2": active["v2"], "v3": active["v3"],
+                    "tp_level": active["tp"], "sl_level": active["sl"],
                     "entry": active["entry"], "exit": exit_px,
                     "result": result, "net_points": pts, "net_pnl": dollars,
                     "bars_held": i - active["entry_i"],
