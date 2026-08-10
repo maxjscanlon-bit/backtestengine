@@ -118,6 +118,43 @@ check("trade pnl reconciles with series pnl",
       abs(tr_sum - r2['stats']['total_pnl']) < max(50.0, 0.02 * abs(r2['stats']['total_pnl']) + 50),
       f"trades {tr_sum:.2f} vs series {r2['stats']['total_pnl']:.2f} open_tail={open_pos_tail}")
 
+# ============================================ 1d. SESSIONS AND ALIGNMENT
+
+from nq_engine.sessions import rth_mask, session_date
+from nq_engine.data import load_split
+
+_real = load_split('/home/claude/nq-research/data', 'train')
+
+# right-labeled bars: keep (09:30, 16:00], so 09:30 out and 16:00 in
+_day = _real.loc['2024-03-05 09:00':'2024-03-05 16:30']
+_m = pd.Series(rth_mask(_day.index), index=_day.index)
+check("RTH excludes the 09:30 bar (covers 09:25-09:30, pre-open)",
+      not _m.loc['2024-03-05 09:30'])
+check("RTH includes the 09:35 and 16:00 bars",
+      _m.loc['2024-03-05 09:35'] and _m.loc['2024-03-05 16:00'])
+check("RTH excludes the 16:05 bar (covers 16:00-16:05, post-close)",
+      not _m.loc['2024-03-05 16:05'])
+
+_rth = _real[rth_mask(_real.index)]
+_cnt = _rth.groupby(_rth.index.date).size()
+check("RTH day is exactly 78 bars on full sessions",
+      (_cnt == 78).mean() > 0.95, f"{(_cnt==78).sum()}/{len(_cnt)} days at 78")
+
+# bar alignment: session opens 18:00, so first bar of a session is labeled 18:05
+_open_labels = set(pd.Series(_real.index).dt.strftime('%H:%M')[
+    pd.Series(_real.index).diff().gt(pd.Timedelta(minutes=30)).fillna(False).values])
+check("first bar after the maintenance break is labeled 18:05",
+      _open_labels == {'18:05'}, f"labels seen: {sorted(_open_labels)}")
+
+# session date rolls evening bars into the next trading day
+check("evening bars roll into the next session date",
+      str(session_date(pd.DatetimeIndex(['2024-03-03 18:05']))[0]) == '2024-03-04')
+check("afternoon bars stay on their own session date",
+      str(session_date(pd.DatetimeIndex(['2024-03-04 16:00']))[0]) == '2024-03-04')
+check("session grouping removes split-session artifacts",
+      len(set(session_date(_real.index))) < len(set(_real.index.date)),
+      f"{len(set(_real.index.date))} calendar -> {len(set(session_date(_real.index)))} sessions")
+
 # ================================================== 2. CPCV MECHANICS
 
 paths = cpcv_paths(1000, n_groups=8, k_test=2, embargo_frac=0.02)

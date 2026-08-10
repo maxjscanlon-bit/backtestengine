@@ -18,6 +18,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 
+from .sessions import session_group
 from .validation import cpcv_evaluate, deflated_sharpe, sharpe_moments
 
 
@@ -90,7 +91,7 @@ def optimize(df, signal_fn, space, backtest_fn, friction_ticks=2.0,
     top = scan.iloc[0]
     top_params = {k: top[k] for k in space}
     r_top = cache[tuple(sorted(top_params.items()))]
-    daily = r_top["pnl"].groupby(r_top["pnl"].index.date).sum()
+    daily = session_group(r_top["pnl"]).sum()
     sr, sk, ku, n = sharpe_moments(daily)
     dsr = deflated_sharpe(sr, n_trials=n_trials, n_obs=n, skew=sk, kurt=ku)
 

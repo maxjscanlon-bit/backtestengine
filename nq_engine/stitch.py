@@ -95,9 +95,18 @@ def build_continuous(df, roll_confirm_days=2):
 
 
 def to_eastern_5min(cont, minutes=5):
+    """Aggregate to N-minute right-labeled bars.
+
+    Databento ohlcv-1m stamps ts_event at the START of each 1-minute interval
+    (verified: last bar before the 17:00 break is 16:59, first after the 18:00
+    open is 18:00). So bins must be closed on the LEFT: a bin labeled T then
+    contains start-minutes [T-N, T) and covers real time [T-N, T), which is what
+    a right label is supposed to mean. Using closed='right' shifts every bar
+    forward by one minute.
+    """
     et = cont.tz_convert("America/New_York")
     et.index = et.index.tz_localize(None)
-    agg = et.resample(f"{minutes}min", label="right", closed="right").agg(
+    agg = et.resample(f"{minutes}min", label="right", closed="left").agg(
         {"open": "first", "high": "max", "low": "min", "close": "last",
          "volume": "sum"}).dropna(subset=["close"])
     agg = agg[agg["volume"] > 0]

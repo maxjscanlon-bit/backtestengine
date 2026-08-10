@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats as sps
 
+from .sessions import session_group
+
 
 # ---------------------------------------------------------------- CPCV
 
@@ -87,7 +89,7 @@ def cpcv_evaluate(df, signal_fn, param_grid, backtest_fn, n_groups=8, k_test=2,
 
 
 def _daily_sharpe(pnl):
-    daily = pnl.groupby(pnl.index.date).sum()
+    daily = session_group(pnl).sum()
     sd = daily.std()
     if sd == 0 or np.isnan(sd):
         return np.nan

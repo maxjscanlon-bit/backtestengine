@@ -10,6 +10,8 @@ That is the honest baseline. No lookahead by construction.
 import numpy as np
 import pandas as pd
 
+from .sessions import session_group
+
 POINT_VALUE = 20.0
 TICK = 0.25
 
@@ -115,7 +117,7 @@ def summarize(pnl, equity, trades):
         stats["profit_factor"] = round(float(gp / gl), 3) if gl > 0 else float("inf")
     dd = equity - equity.cummax()
     stats["max_drawdown"] = round(float(dd.min()), 2)
-    daily = pnl.groupby(pnl.index.date).sum()
+    daily = session_group(pnl).sum()
     if daily.std() > 0:
         stats["daily_sharpe_ann"] = round(float(daily.mean() / daily.std() * np.sqrt(252)), 2)
     return stats

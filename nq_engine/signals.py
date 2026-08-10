@@ -7,6 +7,8 @@ Add new hypotheses here. Keep them small and named.
 import numpy as np
 import pandas as pd
 
+from .sessions import rth_mask
+
 
 def zscore_reversal(df, lookback=48, z_entry=-1.5, hold_bars=6, session_rth_only=True):
     """Intraday analog of the YM strong-down reversal. Long when bar-close z-score
@@ -21,9 +23,7 @@ def zscore_reversal(df, lookback=48, z_entry=-1.5, hold_bars=6, session_rth_only
     z = (ret - mu) / sd
     entries = (z < z_entry)
     if session_rth_only:
-        t = df.index
-        rth = (t.hour * 60 + t.minute >= 9 * 60 + 30) & (t.hour * 60 + t.minute < 16 * 60)
-        entries = entries & rth
+        entries = entries & rth_mask(df.index)
     live = 0
     e = np.asarray(entries.values)
     p = np.zeros(len(df))

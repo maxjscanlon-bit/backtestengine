@@ -22,8 +22,24 @@ Frozen record of every hypothesis tested. Verdicts are final once written.
    ~18,469, compressing pct returns in early history relative to late. Signals now use point
    differences, which are invariant to the additive offset. Regression test added.
 
-Known outstanding, not yet fixed: daily P&L grouping splits Globex sessions at midnight, so daily
-Sharpe (and therefore DSR and CPCV summaries) is computed on calendar days rather than 18:00-17:00 ET
-sessions. RTH filter is off by one bar at both ends under `label='right'` bars.
+**2026-08-07, second pass.** Remaining two audit items fixed, and a third defect found while fixing
+them. All results before commit `c6e1bf2` are void.
+
+3. *Session boundaries.* Daily P&L was grouped by calendar date, splitting each Globex session at
+   midnight and fabricating 264 low-activity pseudo-days across the sample. Daily Sharpe, and
+   therefore DSR and every CPCV summary, was computed on the wrong denominator. Fixed via
+   `sessions.session_group`, which runs 18:00-17:00 ET per CME trade-date convention.
+4. *RTH off-by-one.* Under right-labeled bars the filter `>= 09:30 and < 16:00` included the 09:30
+   bar, which covers 09:25-09:30 and is pre-open, and dropped the 16:00 bar, which is the last real
+   RTH bar. Fixed via `sessions.rth_mask`, keeping (09:30, 16:00]. RTH days are now exactly 78 bars.
+5. *Bar misalignment (found during 4).* Databento `ohlcv-1m` stamps `ts_event` at the interval START,
+   verified empirically: the last bar before the 17:00 break is 16:59 and the first after the 18:00
+   open is 18:00. The aggregation used `closed='right'`, so every 5-minute bar covered T-4 to T+1
+   instead of T-5 to T. The entire dataset was shifted one minute. Fixed to `closed='left'` and the
+   continuous series was rebuilt from source. Bar count 355,374 -> 354,081. Splits re-locked. Holdout
+   was never read, so re-locking costs nothing.
+
+Seven regression tests added covering all three. Suite is 27/27.
 
 | 2026-08-07 | z-score reversal, optimizer re-verification post-fix | same 2x2x2 grid, RTH, first 60k TRAIN bars | TRAIN subset | best -$61.54/trade | 0.845 | DSR 0.0005 | REJECT. Re-run of the voided trials 2-9, not new trials. Whole grid loses. Long-only only. |
+| 2026-08-07 | z-score reversal, optimizer re-verification post-audit | same 2x2x2 grid, RTH, first 60k TRAIN bars | TRAIN subset | best -$61.25/trade | n/a | DSR 0.0016 | REJECT. Third re-run of voided trials 2-9, not new trials. Ledger stays at 9. Whole grid loses, long-only only. |
