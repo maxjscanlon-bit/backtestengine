@@ -170,3 +170,11 @@ amputating winners). 95% of winners never dug past -23.40 pts, supporting the 1.
 50% of losers ran +10.6 pts favourable before reversing, 25% ran +17.7 pts, which motivates
 testing a breakeven stop or partial exit. Worst winner drew -$834 at 1 contract, i.e. 83% of
 a $1,000 daily loss limit on a trade that eventually won: strong argument for half-size.
+
+**2026-08-11 Volatility-scaled friction added (`friction.py`).**
+Model: ticks/side = base + slope*(ATR/ATR_median - 1), clamped [2, 6].
+TRAIN, Cypher ATR 1.5/1.0: realistic average cost is 2.73 ticks/side, not 2.0, because 56%
+of trades trigger when ATR is above median. Expectancy $94.20 -> $86.87 (-8%), PF 1.608 ->
+1.553. Smaller impact than expected: at ~$290 average win, even 6 ticks/side is a modest
+share. Use $87/trade for account simulations. Contrast with 1-minute bars where identical
+friction flips expectancy negative, i.e. friction only binds when per-trade edge is small.
