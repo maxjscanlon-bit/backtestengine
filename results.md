@@ -92,3 +92,25 @@ trades >= 30, max drawdown not worse than -$8,000.
 Partial pass counts as FAIL. One run, no re-tries, no parameter changes.
 PASS -> sim forward test then small live. FAIL -> archived permanently.
 Stated expectation before running: Sharpe 0.4-0.9, 40-55 trades, meaningful chance of failing.
+
+**2026-08-10 HOLDOUT RESULT — FAIL. Strategy archived.**
+
+| Metric | TRAIN | VAL (contaminated) | HOLDOUT |
+|---|---|---|---|
+| Total P&L | $16,136 | $10,393 | **-$7,963.53** |
+| Session Sharpe | 1.197 | 1.666 | **-1.261** |
+| Profit factor | 1.676 | 1.719 | **0.539** |
+| Win rate | 59.4% | 55.8% | **32.3%** |
+| Expectancy/trade | $168.09 | $199.87 | **-$256.89** |
+| Max drawdown | -$3,140 | -$2,131 | **-$13,114** |
+| Trades | 96 | 52 | 31 |
+
+Four of five criteria failed. Only the trade-count minimum passed. Result is not marginal,
+it is a sign flip: the strategy lost more per trade on HOLDOUT than it made on TRAIN.
+Win rate collapsed from 59.4% to 32.3% and drawdown was 4x the TRAIN figure.
+
+Per pre-commitment: ARCHIVED. No tweaking, no re-running with different exits, no rescue.
+
+Final ledger: 213 trials, 0 survivors. HOLDOUT is now spent and this dataset is finished
+as an evaluation tool. Any future strategy tested on this data carries the full 213-trial
+selection burden plus a consumed holdout, and cannot be honestly validated here.
