@@ -81,3 +81,5 @@ Also confirmed this date: full C#/NinjaScript parity. NT pseudo ledger reported 
 $58.84/trade, PF 1.16 vs 1.20, win 55.3% vs 56.7%. Edge survives realistic fills.
 
 HOLDOUT (2025-08 to 2026-08) remains locked and unread.
+
+| 2026-08-10 | Cypher P10 LONG-ONLY | period 10, tp 0.382, slb 0.10, 2 ticks, bullish patterns only | TRAIN + VAL | TRAIN $168.09/trade, VAL $199.87/trade | 1.676 / 1.719 | DSR 0.227 | Trials 212-213. Dramatically better on both periods: TRAIN Sharpe 1.197 (vs 0.543), CPCV frac-positive 0.964 (vs 0.643), maxDD halved. VAL Sharpe 1.666. **BUT VAL IS NO LONGER A CLEAN TEST FOR THIS VARIANT** — the long-only idea came from observing short-side losses on both TRAIN and VAL. VAL is now in-sample-by-selection. DSR 0.227 still fails the 0.95 gate at 213 trials. HOLDOUT is the only uncontaminated data remaining and must NOT be spent casually. |

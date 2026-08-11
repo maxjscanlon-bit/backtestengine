@@ -22,7 +22,7 @@ TICK = 0.25
 
 def run_cypher(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272, c_hi=1.414,
                d_ret=0.786, tp_frac=0.382, sl_buffer_frac=0.1,
-               friction_ticks=2.0):
+               friction_ticks=2.0, side='both'):
     high = df["high"].values
     low = df["low"].values
     close = df["close"].values
@@ -73,7 +73,9 @@ def run_cypher(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272, c_hi=1.414,
             if bull or bear:
                 rb = (A - B) / xa            # B retracement of XA
                 rc = (C - X) / xa            # C extension of XA from X
-                if b_lo <= rb <= b_hi and c_lo <= rc <= c_hi:
+                take_side = (side == 'both' or (side == 'long' and bull)
+                             or (side == 'short' and bear))
+                if b_lo <= rb <= b_hi and c_lo <= rc <= c_hi and take_side:
                     D = C - d_ret * (C - X)
                     slb = abs(C - X) * sl_buffer_frac
                     if bull:
