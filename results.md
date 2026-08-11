@@ -83,3 +83,12 @@ $58.84/trade, PF 1.16 vs 1.20, win 55.3% vs 56.7%. Edge survives realistic fills
 HOLDOUT (2025-08 to 2026-08) remains locked and unread.
 
 | 2026-08-10 | Cypher P10 LONG-ONLY | period 10, tp 0.382, slb 0.10, 2 ticks, bullish patterns only | TRAIN + VAL | TRAIN $168.09/trade, VAL $199.87/trade | 1.676 / 1.719 | DSR 0.227 | Trials 212-213. Dramatically better on both periods: TRAIN Sharpe 1.197 (vs 0.543), CPCV frac-positive 0.964 (vs 0.643), maxDD halved. VAL Sharpe 1.666. **BUT VAL IS NO LONGER A CLEAN TEST FOR THIS VARIANT** — the long-only idea came from observing short-side losses on both TRAIN and VAL. VAL is now in-sample-by-selection. DSR 0.227 still fails the 0.95 gate at 213 trials. HOLDOUT is the only uncontaminated data remaining and must NOT be spent casually. |
+
+**2026-08-10 HOLDOUT shot, criterion pre-committed before execution.**
+Strategy frozen: Cypher, period 10, tp_frac 0.382, sl_buffer_frac 0.10, d_ret 0.786,
+B 0.382-0.618, C 1.272-1.414, LONG ONLY, 2 ticks/side, conservative gap-aware fills, 1 contract.
+PASS requires ALL of: total P&L > 0, session Sharpe >= 0.50, profit factor >= 1.20,
+trades >= 30, max drawdown not worse than -$8,000.
+Partial pass counts as FAIL. One run, no re-tries, no parameter changes.
+PASS -> sim forward test then small live. FAIL -> archived permanently.
+Stated expectation before running: Sharpe 0.4-0.9, 40-55 trades, meaningful chance of failing.
