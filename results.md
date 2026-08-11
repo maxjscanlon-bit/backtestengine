@@ -141,3 +141,32 @@ zone is reached first.
 CONCLUSION: no logic defect found. Fill-convention choice moves per-trade results ~20%,
 so all expectancy point estimates carry at least that much model uncertainty. This is the
 honest resolution limit of OHLC backtesting and matches what the NT real-order run showed.
+
+**2026-08-11 Walk-forward parameter selection — strongest negative finding yet.**
+6 anchored windows on TRAIN, 70/30 fit/apply, 16-cell ATR bracket grid.
+
+| window | OOS period | chosen params | IS pnl | OOS pnl | OOS trades |
+|---|---|---|---|---|---|
+| 1 | 2021-12 to 2022-02 | sl 1.0 tp 2.5 | -59 | +5,443 | 9 |
+| 2 | 2022-06 to 2022-08 | sl 2.0 tp 1.0 | +6,555 | 0 | 0 |
+| 3 | 2022-12 to 2023-02 | sl 1.5 tp 1.5 | +2,457 | +1,843 | 10 |
+| 4 | 2023-06 to 2023-08 | sl 1.5 tp 1.0 | +1,574 | -518 | 10 |
+| 5 | 2023-12 to 2024-02 | sl 3.0 tp 2.5 | +1,992 | +189 | 10 |
+| 6 | 2024-06 to 2024-08 | sl 2.0 tp 0.75 | +3,585 | -1,272 | 8 |
+
+**6 distinct parameter sets chosen in 6 windows. Zero repeats.** Only 3/6 windows OOS
+positive. Total OOS +$5,685 comes almost entirely from window 1, whose params had NEGATIVE
+in-sample pnl. The best in-sample window (+$6,555) produced zero OOS trades.
+
+Interpretation: CPCV scores a FIXED parameter set across folds (28/28 positive). Walk-forward
+scores the ACT OF CHOOSING parameters through time, which is what live trading actually does,
+and it fails. The ATR bracket surface has no persistent structure; in-sample optima are noise.
+Practical rule: if traded, freeze brackets on structural grounds (1.5xATR sits at the 95th
+percentile of winner MAE) and never re-optimize.
+
+**MAE/MFE tracking added to cypher_multi.** TRAIN, 100 trades:
+winners median MAE -6.77 pts vs losers -27.44 pts (4x separation, so the stop is not
+amputating winners). 95% of winners never dug past -23.40 pts, supporting the 1.5xATR stop.
+50% of losers ran +10.6 pts favourable before reversing, 25% ran +17.7 pts, which motivates
+testing a breakeven stop or partial exit. Worst winner drew -$834 at 1 contract, i.e. 83% of
+a $1,000 daily loss limit on a trade that eventually won: strong argument for half-size.
