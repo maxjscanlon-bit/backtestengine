@@ -103,7 +103,8 @@ def run_cypher_multi(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272,
             hit = (r["dir"] == 1 and low[i] < r["entry"]) or \
                   (r["dir"] == -1 and high[i] > r["entry"])
             if hit and len(active) < max_concurrent:
-                active.append({**r, "entry_i": i, "entered_bar": i})
+                active.append({**r, "entry_i": i, "entered_bar": i,
+                               "mae": 0.0, "mfe": 0.0})
             else:
                 still.append(r)
         resting = still
@@ -112,6 +113,14 @@ def run_cypher_multi(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272,
         # ---- manage open trades
         keep = []
         for t in active:
+            # excursions in points, favourable/adverse relative to entry
+            up = (high[i] - t["entry"]) * t["dir"]
+            dn = (low[i] - t["entry"]) * t["dir"]
+            t["mfe"] = max(t["mfe"], up if t["dir"] == 1 else -dn * -1)
+            t["mae"] = min(t["mae"], dn if t["dir"] == 1 else -up * -1)
+            if t["dir"] == -1:
+                t["mfe"] = max(t["mfe"], (t["entry"] - low[i]))
+                t["mae"] = min(t["mae"], (t["entry"] - high[i]))
             exit_px, result = None, 0
             entered_this_bar = t["entered_bar"] == i
             op = open_[i]
@@ -135,7 +144,9 @@ def run_cypher_multi(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272,
                                "dir": t["dir"], "entry": t["entry"], "exit": exit_px,
                                "tp_level": t["tp"], "sl_level": t["sl"],
                                "result": result, "net_points": pts,
-                               "net_pnl": dollars, "bars_held": i - t["entry_i"]})
+                               "net_pnl": dollars, "bars_held": i - t["entry_i"],
+                               "mae_pts": round(t["mae"], 4),
+                               "mfe_pts": round(t["mfe"], 4)})
         active = keep
 
     pnl = pd.Series(pnl, index=idx)
