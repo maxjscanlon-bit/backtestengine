@@ -116,3 +116,28 @@ as an evaluation tool. Any future strategy tested on this data carries the full 
 selection burden plus a consumed holdout, and cannot be honestly validated here.
 
 | 2026-08-10 | Cypher vol-scaled brackets (ATR-multiple SL/TP) | 18 variants: mode atr/hybrid x atr_sl 1.5/2.0/3.0 x atr_tp 1.0/1.5/2.5, ATR=EWMA96 shifted 1 bar, both directions | TRAIN ONLY | best $104.10/trade (atr, sl 1.5, tp 1.0, 191 trades) | 1.943 | DSR 0.694 | Trials 214-231. HYPOTHESIS GENERATION ONLY, NOT VALIDATED. Best variant TRAIN Sharpe 1.883 vs 0.543 structural, CPCV 28/28 folds positive, DSR 0.694 (best ever, still below 0.95). Pure-ATR brackets beat hybrid across the board, and the ATR mode is monotone in a sensible way (tighter TP -> higher win rate). **CANNOT BE VALIDATED ON THIS DATASET**: the vol-scaling hypothesis was derived from the HOLDOUT autopsy, so testing it on VAL or HOLDOUT is circular. Requires fresh data (Databento 2010-2021, untouched) for any honest verdict. |
+
+**2026-08-11 Independent engine verification (backtesting.py 0.6.6).**
+Third implementation, third-party library, own order lifecycle and fill logic.
+Compared on 60,000 TRAIN bars, friction 0, gross points.
+
+| | nq_engine | backtesting.py |
+|---|---|---|
+| Trades | 38 | 63 |
+| Gross points | 238.46 | 322.33 |
+| Win rate | 68.4% | 68.3% |
+| Per trade | 6.28 | 5.12 |
+
+AGREES: entry prices identical to 0 decimals on all 29 shared trades. Exit times agree
+27/29. Win rates agree to 0.1pt. Pattern detection, ATR math and level computation are
+now confirmed across three independent implementations.
+
+DIFFERS (documented convention, not bugs): exit prices agree only 4/29 because nq_engine
+fills gapped levels at the bar open (worse for stops, better for targets) while
+backtesting.py fills at the level. Trade count differs because backtesting.py fills limits
+on touch while nq_engine requires trade-through and cancels resting orders when the stop
+zone is reached first.
+
+CONCLUSION: no logic defect found. Fill-convention choice moves per-trade results ~20%,
+so all expectancy point estimates carry at least that much model uncertainty. This is the
+honest resolution limit of OHLC backtesting and matches what the NT real-order run showed.
