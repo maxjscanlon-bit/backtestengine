@@ -114,3 +114,5 @@ Per pre-commitment: ARCHIVED. No tweaking, no re-running with different exits, n
 Final ledger: 213 trials, 0 survivors. HOLDOUT is now spent and this dataset is finished
 as an evaluation tool. Any future strategy tested on this data carries the full 213-trial
 selection burden plus a consumed holdout, and cannot be honestly validated here.
+
+| 2026-08-10 | Cypher vol-scaled brackets (ATR-multiple SL/TP) | 18 variants: mode atr/hybrid x atr_sl 1.5/2.0/3.0 x atr_tp 1.0/1.5/2.5, ATR=EWMA96 shifted 1 bar, both directions | TRAIN ONLY | best $104.10/trade (atr, sl 1.5, tp 1.0, 191 trades) | 1.943 | DSR 0.694 | Trials 214-231. HYPOTHESIS GENERATION ONLY, NOT VALIDATED. Best variant TRAIN Sharpe 1.883 vs 0.543 structural, CPCV 28/28 folds positive, DSR 0.694 (best ever, still below 0.95). Pure-ATR brackets beat hybrid across the board, and the ATR mode is monotone in a sensible way (tighter TP -> higher win rate). **CANNOT BE VALIDATED ON THIS DATASET**: the vol-scaling hypothesis was derived from the HOLDOUT autopsy, so testing it on VAL or HOLDOUT is circular. Requires fresh data (Databento 2010-2021, untouched) for any honest verdict. |

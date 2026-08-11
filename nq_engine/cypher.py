@@ -20,13 +20,30 @@ POINT_VALUE = 20.0
 TICK = 0.25
 
 
+def _atr(df, n=96):
+    h, l, c = df["high"], df["low"], df["close"]
+    pc = c.shift(1)
+    tr = pd.concat([h - l, (h - pc).abs(), (l - pc).abs()], axis=1).max(axis=1)
+    return tr.ewm(span=n, adjust=False).mean().shift(1)   # shift: known before bar
+
+
 def run_cypher(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272, c_hi=1.414,
                d_ret=0.786, tp_frac=0.382, sl_buffer_frac=0.1,
-               friction_ticks=2.0, side='both'):
+               friction_ticks=2.0, side='both',
+               bracket_mode='structural', atr_n=96, atr_sl=2.0, atr_tp=1.5):
+    """bracket_mode:
+       'structural'  original: SL beyond X by a fraction of |C-X|, TP a fraction of CD
+       'atr'         SL and TP are pure multiples of ATR at pattern formation
+       'hybrid'      SL beyond X by atr_sl * ATR (structure anchored, vol scaled),
+                     TP = atr_tp * ATR from entry
+       ATR is EWMA of true range over atr_n bars, shifted one bar so it is known
+       before the pattern bar closes. Point-based, Panama-immune.
+    """
     high = df["high"].values
     low = df["low"].values
     close = df["close"].values
     open_ = df["open"].values
+    atr = _atr(df, atr_n).values
     n = len(df)
     idx = df.index
 
@@ -77,17 +94,21 @@ def run_cypher(df, period=10, b_lo=0.382, b_hi=0.618, c_lo=1.272, c_hi=1.414,
                              or (side == 'short' and bear))
                 if b_lo <= rb <= b_hi and c_lo <= rc <= c_hi and take_side:
                     D = C - d_ret * (C - X)
-                    slb = abs(C - X) * sl_buffer_frac
-                    if bull:
-                        sl = X - slb
-                        tp = D + tp_frac * (C - D)
-                        pending = {"entry": D, "dir": 1, "tp": tp, "sl": sl,
-                                   "X": X, "A": A, "B": B, "C": C}
-                    else:
-                        sl = X + slb
-                        tp = D - tp_frac * (D - C)
-                        pending = {"entry": D, "dir": -1, "tp": tp, "sl": sl,
-                                   "X": X, "A": A, "B": B, "C": C}
+                    a = atr[i]
+                    if a != a or a <= 0:
+                        continue
+                    if bracket_mode == 'structural':
+                        slb = abs(C - X) * sl_buffer_frac
+                        sl = (X - slb) if bull else (X + slb)
+                        tp = (D + tp_frac * (C - D)) if bull else (D - tp_frac * (D - C))
+                    elif bracket_mode == 'atr':
+                        sl = (D - atr_sl * a) if bull else (D + atr_sl * a)
+                        tp = (D + atr_tp * a) if bull else (D - atr_tp * a)
+                    else:  # hybrid
+                        sl = (X - atr_sl * a) if bull else (X + atr_sl * a)
+                        tp = (D + atr_tp * a) if bull else (D - atr_tp * a)
+                    pending = {"entry": D, "dir": 1 if bull else -1, "tp": tp, "sl": sl,
+                               "X": X, "A": A, "B": B, "C": C}
 
         # invalidate pending if price passes the stop zone before entry
         if pending is not None and active is None:
