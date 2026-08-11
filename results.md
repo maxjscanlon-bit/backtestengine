@@ -56,3 +56,28 @@ Seven regression tests added covering all three. Suite is 27/27.
 | 2026-08-08 | Cypher P10 promotion battery (frozen: period 10, tp 0.382, slb 0.10) | friction 0-4 ticks, 3 regimes, 28 CPCV folds, 171-trade independent verification | full TRAIN | +$58.84/trade at 2 ticks, +$38.84 at 4 | 1.200 | n/a (no new search) | Battery results: survives 4 ticks/side positive; CPCV folds mean +0.49 median +0.63 frac-pos 0.64; regimes +0.36/-0.12/+1.03 (middle third flat, not inverted); tradability: 57 tr/yr, maxDD -$6.8k, worst streak 7. No new trials (frozen params, no selection). |
 
 **2026-08-08 VAL shot, criterion pre-committed before execution.** Cypher P10 frozen (period 10, tp_frac 0.382, sl_buffer 0.10, 2 ticks/side, gap-aware fills). PASS requires BOTH: total VAL P&L > 0 AND session Sharpe > 0. One run, no re-tries, no parameter changes regardless of outcome. Fail -> archive the strategy.
+
+**2026-08-10 VAL RESULT — PASS.** Cypher P10, frozen params, single run, no re-tries.
+
+| Metric | TRAIN | VAL (2024-08 to 2025-08) |
+|---|---|---|
+| Total P&L | $10,062.07 | **$2,863.53** |
+| Session Sharpe | 0.54 | **0.445** |
+| Trades | 171 (57/yr) | 68 |
+| Win rate | 56.7% | 47.1% |
+| Profit factor | 1.200 | 1.132 |
+| Expectancy/trade | $58.84 | $42.11 |
+| Max drawdown | -$6,786 | -$5,634 |
+
+Both pre-committed criteria met (P&L > 0, Sharpe > 0). Performance degraded ~28% on expectancy
+vs TRAIN, which is normal and expected out-of-sample decay, not a red flag. Directional structure
+held: long 49 trades +$6,521 (win 53.1%), short 19 trades -$3,658 (win 31.6%). The long/short
+asymmetry observed on TRAIN replicated independently on unseen data — shorts lost money in both
+periods. This is now a two-period observation, not a TRAIN artifact.
+
+Also confirmed this date: full C#/NinjaScript parity. NT pseudo ledger reported 171 trades,
+503.10 net points, $10,062.07 vs Python $10,062.07 — exact to the cent. NT real-order layer
+(its own fill engine, first-entry-per-pattern only): 76 trades, avg $57.30/trade vs Python
+$58.84/trade, PF 1.16 vs 1.20, win 55.3% vs 56.7%. Edge survives realistic fills.
+
+HOLDOUT (2025-08 to 2026-08) remains locked and unread.
