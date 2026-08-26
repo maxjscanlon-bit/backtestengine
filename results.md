@@ -192,3 +192,25 @@ One run each, no re-tries, no parameter changes. Partial pass = FAIL.
 Note: both candidates FAILED the Phase 3 gate (DSR 0.097 and 0.334 vs 0.95 required,
 PBO 0.644). VAL is being spent against protocol on explicit user instruction.
 Expectation stated before running: A near breakeven, B better but thin on trades.
+
+**2026-08-11 H&S VAL RESULT — BOTH CANDIDATES FAIL. Archived.**
+
+| | TRAIN | VAL |
+|---|---|---|
+| A unconditioned | +$50.98/tr, PF 1.22, 373 tr | **-$160.61/tr, PF 0.64, Sharpe -1.76, 126 tr** |
+| B high-vol filter | +$208.08/tr, 109 tr | **-$875.15/tr, PF 0.27, Sharpe -1.90, 21 tr** |
+
+VAL vol_state breakdown: low -$52.49 (n=61), mid +$23.43 (n=41), high -$875.15 (n=21).
+The high-vol filter that was the strongest conditional effect on TRAIN (monotone across
+136/127/109 trades, win rate 64->71->79%) selected the WORST trades on VAL and discarded
+the only profitable bucket. Third consecutive conditional-effect sign flip out of sample
+(after Cypher long/short and Butterfly chop+high-vol).
+
+Gate was correct. DSR 0.097 / 0.334 and PBO 0.644 flagged both candidates as selection
+artifacts despite CPCV 25-26/28 folds positive, walk-forward 5/6 windows positive, and a
+monotone stop-width mechanism with MAE support. Only the search-pricing metrics (DSR, PBO)
+predicted the failure; every strategy-quality metric was fooled.
+
+Ledger: 323 trials, 5 pattern families archived (M/W both directions, Cypher, Butterfly,
+H&S). VAL on this dataset is now spent. HOLDOUT spent previously. This dataset is exhausted
+as an evaluation tool.
