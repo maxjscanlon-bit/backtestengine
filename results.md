@@ -178,3 +178,5 @@ of trades trigger when ATR is above median. Expectancy $94.20 -> $86.87 (-8%), P
 1.553. Smaller impact than expected: at ~$290 average win, even 6 ticks/side is a modest
 share. Use $87/trade for account simulations. Contrast with 1-minute bars where identical
 friction flips expectancy negative, i.e. friction only binds when per-trade edge is small.
+
+| 2026-08-11 | Head & Shoulders / Inverse H&S, neckline-break breakout | 36 configs: period 5/10/20 x shoulder_tol 0.35/0.60 x 6 ATR bracket pairs | TRAIN | best +$50.98/trade (p10, stol 0.35, sl 3.0, tp 1.5) | 1.22 | pending | Trials 282-317. 5/36 positive, median -$52.48. NOT scattered: every positive cell has sl=3.0, and expectancy is MONOTONE in stop width across all 6 period/tolerance combos (sl 1.0 -> 3.0 moves p10 from -$92.97 to +$50.98; win rate 36% -> 71%). Mechanism: breakouts get shaken out by tight stops. Period 20 negative everywhere. Note 1.5/1.0 brackets (winner on both harmonics) are heavily negative here, so bracket knowledge did NOT transfer. Trade frequency 124-443/yr vs ~23 for harmonics, so friction assumptions carry much more weight. 8/8 invariants passed. |
