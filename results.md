@@ -180,3 +180,15 @@ share. Use $87/trade for account simulations. Contrast with 1-minute bars where 
 friction flips expectancy negative, i.e. friction only binds when per-trade edge is small.
 
 | 2026-08-11 | Head & Shoulders / Inverse H&S, neckline-break breakout | 36 configs: period 5/10/20 x shoulder_tol 0.35/0.60 x 6 ATR bracket pairs | TRAIN | best +$50.98/trade (p10, stol 0.35, sl 3.0, tp 1.5) | 1.22 | pending | Trials 282-317. 5/36 positive, median -$52.48. NOT scattered: every positive cell has sl=3.0, and expectancy is MONOTONE in stop width across all 6 period/tolerance combos (sl 1.0 -> 3.0 moves p10 from -$92.97 to +$50.98; win rate 36% -> 71%). Mechanism: breakouts get shaken out by tight stops. Period 20 negative everywhere. Note 1.5/1.0 brackets (winner on both harmonics) are heavily negative here, so bracket knowledge did NOT transfer. Trade frequency 124-443/yr vs ~23 for harmonics, so friction assumptions carry much more weight. 8/8 invariants passed. |
+
+**2026-08-11 H&S VAL shot, criterion pre-committed before execution.**
+Frozen: period 10, shoulder_tol 0.35, head_min 0.5, neckline_slope_max 0.5, atr_n 96,
+atr_sl 3.0, atr_tp 1.5, both directions, 2 ticks/side, conservative fills.
+TWO candidates run separately and judged independently:
+  A = unconditioned
+  B = high-vol-state filter only (vol_state == 'high')
+PASS requires ALL: total P&L > 0, session Sharpe >= 0.50, PF >= 1.20, trades >= 30.
+One run each, no re-tries, no parameter changes. Partial pass = FAIL.
+Note: both candidates FAILED the Phase 3 gate (DSR 0.097 and 0.334 vs 0.95 required,
+PBO 0.644). VAL is being spent against protocol on explicit user instruction.
+Expectation stated before running: A near breakeven, B better but thin on trades.
