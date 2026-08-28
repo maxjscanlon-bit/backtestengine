@@ -225,3 +225,20 @@ mean-reverts at daily scale (V-recoveries), punishing trend-state filters; and 5
 structurally underpowered for regime classification, which earns its keep across decades by
 avoiding rare catastrophic bears. No winner declared; picking one from this table would be a
 sample artifact. Module retained for use on long-history data.
+
+**2026-08-27 Inertia battery.** Direct tests of "market keeps doing what it's been doing":
+(1) Daily direction autocorrelation lags 1-10: zero (max |z| 1.26, negative short lags).
+(2) Magnitude |r| autocorrelation: z +4.7 to +7.6 all lags. Vol clustering is the only real
+inertia in this dataset. (3) Sign persistence: P(up|up)=55.5% vs 54.6% base. Nothing.
+(4) Weekly direction: t=-0.17. (5) Gao et al. intraday momentum (first 30m -> last 30m),
+pre-registered positive: REJECTED on NQ, corr -0.011, strategy -2.0 pts/day gross, negative
+5/6 years. (6) Down-streak bounce: next-day return after 1/2/3 consecutive down days =
++16/+32/+72 pts, monotone, positive ALL SIX YEARS including 2022 bear (+57.6), positive all
+years vol-normalized (+0.22 daily ranges), pooled t=3.13, n=116, ~23 events/yr.
+
+Coherent picture across all horizons measured this project: NQ 2021-2026 persists in
+MAGNITUDE and mean-reverts in DIRECTION, from 5-minute races (65.3% near-barrier, stable all
+6 years) to daily streaks. Down-streak bounce is conditional cut #5 (four predecessors
+inverted OOS) but is the first with monotone dose-response plus 6/6 yearly signs incl. the
+bear year. Status: best daily-scale candidate produced by this dataset; verdict requires
+long-history daily data (30y) via one pre-registered test.
