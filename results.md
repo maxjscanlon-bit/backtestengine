@@ -242,3 +242,20 @@ MAGNITUDE and mean-reverts in DIRECTION, from 5-minute races (65.3% near-barrier
 inverted OOS) but is the first with monotone dose-response plus 6/6 yearly signs incl. the
 bear year. Status: best daily-scale candidate produced by this dataset; verdict requires
 long-history daily data (30y) via one pre-registered test.
+
+**2026-08-27 Continuation family (flag/rectangle/triangle) — `flag.py`.** Pre-registered
+prediction then 16-config grid on FULL sample (no splits remain). Prediction scorecard:
+correct on median loss (-$9.50, predicted -$40 to -$10), stop-width dial (win 58.4% ->
+68.9%, sl1.5 -$22.52 vs sl3.0 +$25.24), tight-stop failure. Wrong on frequency (51-632
+trades/yr, not the 20-40 pivot-pattern cap) and wrong that positives would be isolated:
+imp_atr>=5.0 x sl=3.0 is a coherent region, positive in all 4 consolidation shapes
+(+$95.98/+$55.98/+$37.53/+$34.33), pooled 2,814 trades +$44.03/trade.
+
+Consistent with trials 1-63 (z-score reversal rejected because extreme moves CONTINUED):
+ordinary fluctuations mean-revert, tail impulses trend. BUT yearly guard FAILS: 4/6 years
+positive (2024 negative both views, 2026 -$63 pooled), vs the 6/6 bar set by the
+near-barrier race and down-streak bounce. Long +$64.68 vs short +$1.66, so part of the
+"edge" is long index exposure in costume. Status: hypothesis #3 for fresh data, behind
+down-streak bounce and near-barrier mean reversion. Trials ~446. Screenshot pattern-list
+claims (83%/78%/75%) fully adjudicated: all six patterns now covered by tested families,
+none survive executable fills + friction + yearly stability on this dataset.
