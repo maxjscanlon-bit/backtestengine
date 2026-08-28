@@ -22,16 +22,25 @@ def regimes(df, atr_n=96, er_n=96, lookback=5520, lo=0.33, hi=0.67):
     def bucket(x, labels):
         return pd.cut(x, [-0.01, lo, hi, 1.01], labels=labels)
 
+    # DIRECTIONAL regime: sign and strength of longer-term drift, in points,
+    # measured over dir_n bars and shifted one bar so it is known in advance.
+    dir_n = 1560                      # ~1 week of 5-min bars
+    drift = (df["close"] - df["close"].shift(dir_n)).shift(1)
+    drift_atr = drift / atr.replace(0, np.nan)
+    dir_state = pd.cut(drift_atr, [-1e9, -1.0, 1.0, 1e9],
+                       labels=["bear", "neutral", "bull"])
+
     return pd.DataFrame({
         "atr": atr, "vol_pct": vol_rank, "er": er, "er_pct": er_rank,
         "vol_state": bucket(vol_rank, ["low", "mid", "high"]),
         "trend_state": bucket(er_rank, ["chop", "mixed", "trend"]),
+        "drift_atr": drift_atr, "dir_state": dir_state,
     }, index=df.index)
 
 
 def condition_trades(trades, reg, on="entry_time"):
     t = trades.copy()
     idx = pd.DatetimeIndex(t[on])
-    for col in ("vol_state", "trend_state", "vol_pct", "er_pct"):
+    for col in ("vol_state", "trend_state", "dir_state", "vol_pct", "er_pct", "drift_atr"):
         t[col] = reg[col].reindex(idx).values
     return t
