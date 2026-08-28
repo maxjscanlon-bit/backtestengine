@@ -214,3 +214,14 @@ predicted the failure; every strategy-quality metric was fooled.
 Ledger: 323 trials, 5 pattern families archived (M/W both directions, Cypher, Butterfly,
 H&S). VAL on this dataset is now spent. HOLDOUT spent previously. This dataset is exhausted
 as an evaluation tool.
+
+**2026-08-27 Directional regime battery (`dirregime.py`).** 11 institutional bull/bear
+classifiers (SMA 200/50, golden cross, TSMOM 1/3/12m, MA slope, EWMA cross, Donchian mid,
+ATR-scaled drawdown hysteresis, expanding-window 2-state HMM), all point-based, no lookahead.
+Evaluated state[t] vs return[t] on 1,289 sessions. RESULT: no classifier distinguishes
+forward returns. |t| max 1.13, six of eleven have inverted sign (bear state outperformed),
+best yearly consistency 3/5. Golden cross spread -20.1 pts/day. Interpretation: 2021-2026 NQ
+mean-reverts at daily scale (V-recoveries), punishing trend-state filters; and 5 years is
+structurally underpowered for regime classification, which earns its keep across decades by
+avoiding rare catastrophic bears. No winner declared; picking one from this table would be a
+sample artifact. Module retained for use on long-history data.
